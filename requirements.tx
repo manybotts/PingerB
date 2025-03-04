@@ -2,5 +2,5 @@ fastapi
 uvicorn
 requests
 pydantic
-sqlite3
 python-dotenv
+pymongo
