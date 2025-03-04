@@ -23,10 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB configuration
+# MongoDB configuration from environment variables
 MONGO_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+DB_NAME = os.environ.get("MONGODB_DB_NAME", "koyeb")
 client = MongoClient(MONGO_URI)
-db = client["koyeb"]
+db = client[DB_NAME]
 apps_collection = db["apps"]
 
 # Ensure a unique index on the "url" field
