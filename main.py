@@ -3,7 +3,7 @@ import time
 import threading
 import logging
 import requests
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -11,16 +11,21 @@ from pymongo import MongoClient, errors
 
 app = FastAPI()
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+# CORS middleware configuration - MORE EXPLICIT
+# Allow your Vercel frontend URL *specifically*
+#  (and localhost for development)
+origins = [
+    "YOUR_VERCEL_FRONTEND_URL",  # e.g., "https://your-pinger-frontend.vercel.app"
+    "http://localhost:3000",      # For local development (if you use it)
+    "http://localhost:1234",     # If you're using Parcel's default port
+]
 
-# CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For production, adjust this to your specific domains
+    allow_origins=origins,  # Use the specific origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],  # Explicitly list methods
+    allow_headers=["*"],  # You might want to be more specific here in production
 )
 
 # MongoDB configuration from environment variables
@@ -56,7 +61,7 @@ def ping_apps():
 threading.Thread(target=ping_apps, daemon=True).start()
 
 @app.get("/apps", response_model=List[str])
-def get_apps():
+async def get_apps():  # Add async keyword
     try:
         apps = list(apps_collection.find({}, {"_id": 0, "url": 1}))
         urls = [doc["url"] for doc in apps]
@@ -66,7 +71,7 @@ def get_apps():
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/apps")
-def add_app(app_data: AppData):
+async def add_app(app_data: AppData):  # Add async keyword
     try:
         apps_collection.insert_one({"url": app_data.url})
         logging.info(f"Added app: {app_data.url}")
@@ -78,8 +83,9 @@ def add_app(app_data: AppData):
         logging.error(f"Error adding app: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+
 @app.delete("/apps")
-def remove_app(app_data: AppData):
+async def remove_app(app_data: AppData):  #Add async keyword
     try:
         result = apps_collection.delete_one({"url": app_data.url})
         if result.deleted_count == 0:
@@ -90,6 +96,10 @@ def remove_app(app_data: AppData):
         logging.error(f"Error removing app: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+@app.options("/apps")  # Add OPTIONS handler for CORS preflight
+async def options_apps(request: Request):
+    return {"Allow": "GET, POST, DELETE, OPTIONS"}
+
 @app.get("/")
-def root():
+async def root():  # Add async keyword
     return {"message": "Koyeb App Pinger is running"}
