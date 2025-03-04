@@ -1,5 +1,8 @@
 import os
-# ... (rest of your imports) ...
+import time
+import threading  # <--- Make sure this is here and correct!
+import logging
+import requests
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,22 +13,19 @@ app = FastAPI()
 
 # CORS middleware configuration
 origins = [
-    "https://pinger-final.vercel.app",  # e.g., "https://your-pinger-frontend.vercel.app"
-    "http://localhost:3000",      # For local development (if you use it)
-    "http://localhost:1234",     # If you're using Parcel's default port
+    "https://pinger-final.vercel.app",  # Your Vercel frontend URL
+    "http://localhost:3000",      # For local development
+    "http://localhost:1234",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Use the specific origins
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],  # Explicitly list methods
-    allow_headers=["*"],  # You might want to be more specific here in production
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
 )
 
-# ... (your MongoDB connection code) ...
-
-# Ensure a unique index on the "url" field
 # MongoDB configuration from environment variables
 MONGO_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("MONGODB_DB_NAME", "koyeb")
@@ -33,12 +33,11 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 apps_collection = db["apps"]
 
+# Ensure a unique index on the "url" field
 apps_collection.create_index("url", unique=True)
 
 class AppData(BaseModel):
     url: str
-
-# ... (your ping_apps thread) ...
 
 def ping_apps():
     while True:
@@ -69,7 +68,6 @@ async def get_apps():
         logging.error(f"Error retrieving apps: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-
 @app.post("/apps")
 async def add_app(app_data: AppData):
     try:
@@ -95,16 +93,14 @@ async def remove_app(app_data: AppData):
         logging.error(f"Error removing app: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-
-@app.options("/apps")  # Add OPTIONS handler for CORS preflight
+@app.options("/apps")
 async def options_apps(request: Request):
     return {"Allow": "GET, POST, DELETE, OPTIONS"}
+
 @app.get("/backend_url")  # NEW ENDPOINT
 async def get_backend_url(request: Request):
-    #Construct the backend URL dynamically
     backend_url = str(request.base_url)
     return {"backend_url": backend_url}
-
 
 @app.get("/")
 async def root():
