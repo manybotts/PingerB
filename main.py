@@ -12,6 +12,7 @@ from telegram.ext import (
     CallbackContext,
 )
 from pymongo import MongoClient, errors
+from typing import Union, Tuple  # Import Union and Tuple
 
 # Enable logging
 logging.basicConfig(
@@ -35,7 +36,7 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 
 # --- Helper Functions ---
 
-def ping_single_app(url: str) -> tuple[bool, int | None]:
+def ping_single_app(url: str) -> Tuple[bool, Union[int, None]]:
     """Pings a single URL and returns (success, status_code)."""
     try:
         response = requests.get(url, timeout=10)
@@ -170,7 +171,7 @@ async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     except Exception as e:
         await update.message.reply_text("An error occured")
-        logger.error(f"Error at ping_command {e}")
+        logger.error(f"Error at ping_command: {e}")
 # --- Main Application Setup ---
 
 def main() -> None:
