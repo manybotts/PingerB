@@ -1,23 +1,17 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.9-slim-buster
 
-# Set the working directory in the container
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the requirements file into the container
-COPY requirements.txt .
+# Copy the requirements file into the container at /app
+COPY requirements.txt /app/
 
-# Install dependencies
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application code
-COPY . .
+# Copy the current directory contents into the container at /app
+COPY . /app/
 
-# Expose the port that the app will run on
-EXPOSE 8000
-
-# Define environment variable for Railway's port if needed
-# ENV PORT 8000
-
-# Run the command to start uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run main.py when the container launches
+CMD ["python", "main.py"]
