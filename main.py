@@ -1,11 +1,12 @@
 import os
 import time
 import logging
-import asyncio  # Import asyncio
+import asyncio
 import requests
 from pyrogram import Client, filters
 from pyrogram.types import Message, ForceReply
 from pymongo import MongoClient, errors
+from typing import Union, Tuple  # <--- IMPORTANT: Import Union and Tuple
 
 # Enable logging
 logging.basicConfig(
@@ -30,11 +31,11 @@ API_HASH = os.environ.get("API_HASH") # Get from my.telegram.org
 
 # --- Helper Functions ---
 
-def ping_single_app(url: str) -> tuple[bool, int | None]:
+def ping_single_app(url: str) -> Tuple[bool, Union[int, None]]: #Corrected type hint
     """Pings a single URL and returns (success, status_code)."""
     try:
         response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         return True, response.status_code
     except requests.exceptions.RequestException:
         return False, None
